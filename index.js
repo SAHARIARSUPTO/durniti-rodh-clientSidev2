@@ -1,12 +1,14 @@
-var express = require("express");
-var cors = require("cors");
-var bodyParser = require("body-parser");
-var { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-var app = express();
+const express = require("express");
+const cors = require("cors");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
+const app = express();
+
+// Middleware to handle CORS and JSON body parsing
 app.use(cors());
-app.use(bodyParser.json()); // Middleware to parse JSON bodies
+app.use(express.json());
 
+// MongoDB connection URI
 const uri =
   "mongodb+srv://plant-review:plant-review@cluster0.nyrjtse.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
@@ -19,13 +21,10 @@ const client = new MongoClient(uri, {
   },
 });
 
-let database;
-
-// Connect to MongoDB once when the server starts
+// Function to connect to MongoDB once when the server starts
 async function connectToMongoDB() {
   try {
     await client.connect();
-    database = client.db("durniti-rodh");
     console.log("Connected to MongoDB");
   } catch (err) {
     console.error("Failed to connect to MongoDB", err);
@@ -33,19 +32,14 @@ async function connectToMongoDB() {
   }
 }
 
-// Helper function to fetch collections
-async function fetchCollection(collectionName, query = {}) {
-  if (!database) {
-    throw new Error("Database not initialized");
-  }
-  const collection = database.collection(collectionName);
-  return await collection.find(query).toArray();
-}
-
 // Route to get all districts
-app.get("/districts", async function (req, res, next) {
+app.get("/districts", async (req, res, next) => {
   try {
-    const districts = await fetchCollection("districts");
+    const districts = await client
+      .db("durniti-rodh")
+      .collection("districts")
+      .find()
+      .toArray();
     res.json(districts);
   } catch (err) {
     next(err);
@@ -53,10 +47,11 @@ app.get("/districts", async function (req, res, next) {
 });
 
 // Route to get a district by ID
-app.get("/districts/:id", async function (req, res, next) {
+app.get("/districts/:id", async (req, res, next) => {
   try {
     const districtId = req.params.id;
-    const district = await database
+    const district = await client
+      .db("durniti-rodh")
       .collection("districts")
       .findOne({ id: districtId });
     if (district) {
@@ -70,9 +65,13 @@ app.get("/districts/:id", async function (req, res, next) {
 });
 
 // Route to get all divisions
-app.get("/divisions", async function (req, res, next) {
+app.get("/divisions", async (req, res, next) => {
   try {
-    const divisions = await fetchCollection("divisions");
+    const divisions = await client
+      .db("durniti-rodh")
+      .collection("divisions")
+      .find()
+      .toArray();
     res.json(divisions);
   } catch (err) {
     next(err);
@@ -80,10 +79,11 @@ app.get("/divisions", async function (req, res, next) {
 });
 
 // Route to get a division by ID
-app.get("/divisions/:id", async function (req, res, next) {
+app.get("/divisions/:id", async (req, res, next) => {
   try {
     const divisionId = req.params.id;
-    const division = await database
+    const division = await client
+      .db("durniti-rodh")
       .collection("divisions")
       .findOne({ id: divisionId });
     if (division) {
@@ -97,9 +97,13 @@ app.get("/divisions/:id", async function (req, res, next) {
 });
 
 // Route to get all upazilas
-app.get("/upazilas", async function (req, res, next) {
+app.get("/upazilas", async (req, res, next) => {
   try {
-    const upazilas = await fetchCollection("upazilas");
+    const upazilas = await client
+      .db("durniti-rodh")
+      .collection("upazilas")
+      .find()
+      .toArray();
     res.json(upazilas);
   } catch (err) {
     next(err);
@@ -107,10 +111,11 @@ app.get("/upazilas", async function (req, res, next) {
 });
 
 // Route to get an upazila by ID
-app.get("/upazilas/:id", async function (req, res, next) {
+app.get("/upazilas/:id", async (req, res, next) => {
   try {
     const upazilaId = req.params.id;
-    const upazila = await database
+    const upazila = await client
+      .db("durniti-rodh")
       .collection("upazilas")
       .findOne({ id: upazilaId });
     if (upazila) {
@@ -124,9 +129,13 @@ app.get("/upazilas/:id", async function (req, res, next) {
 });
 
 // Route to get all unions
-app.get("/unions", async function (req, res, next) {
+app.get("/unions", async (req, res, next) => {
   try {
-    const unions = await fetchCollection("unions");
+    const unions = await client
+      .db("durniti-rodh")
+      .collection("unions")
+      .find()
+      .toArray();
     res.json(unions);
   } catch (err) {
     next(err);
@@ -134,10 +143,13 @@ app.get("/unions", async function (req, res, next) {
 });
 
 // Route to get a union by ID
-app.get("/unions/:id", async function (req, res, next) {
+app.get("/unions/:id", async (req, res, next) => {
   try {
     const unionId = req.params.id;
-    const union = await database.collection("unions").findOne({ id: unionId });
+    const union = await client
+      .db("durniti-rodh")
+      .collection("unions")
+      .findOne({ id: unionId });
     if (union) {
       res.json(union);
     } else {
@@ -149,13 +161,17 @@ app.get("/unions/:id", async function (req, res, next) {
 });
 
 // Route to get all reports
-app.get("/reports", async function (req, res, next) {
+app.get("/reports", async (req, res, next) => {
   try {
     const { divisionName } = req.query;
     const query = {};
     if (divisionName) query.division = divisionName;
 
-    const reports = await database.collection("reports").find(query).toArray();
+    const reports = await client
+      .db("durniti-rodh")
+      .collection("reports")
+      .find(query)
+      .toArray();
     res.json(reports);
   } catch (err) {
     next(err);
@@ -163,10 +179,11 @@ app.get("/reports", async function (req, res, next) {
 });
 
 // Route to get a specific report by ID
-app.get("/reports/:id", async function (req, res, next) {
+app.get("/reports/:id", async (req, res, next) => {
   try {
     const reportId = req.params.id;
-    const report = await database
+    const report = await client
+      .db("durniti-rodh")
       .collection("reports")
       .findOne({ _id: new ObjectId(reportId) });
     if (report) {
@@ -179,25 +196,14 @@ app.get("/reports/:id", async function (req, res, next) {
   }
 });
 
-app.get("/reports/search", async function (req, res, next) {
-  try {
-    const { divisionName } = req.query;
-    const query = {};
-    if (divisionName) query.division = divisionName;
-
-    const reports = await database.collection("reports").find(query).toArray();
-    res.json(reports);
-  } catch (err) {
-    next(err);
-  }
-});
-
 // Route to submit a report
-app.post("/reports", async function (req, res, next) {
+app.post("/reports", async (req, res, next) => {
   try {
     const report = req.body;
-    console.log("Received report:", report); // Log the entire report object
-    const result = await database.collection("reports").insertOne(report);
+    const result = await client
+      .db("durniti-rodh")
+      .collection("reports")
+      .insertOne(report);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -205,18 +211,17 @@ app.post("/reports", async function (req, res, next) {
 });
 
 // Route to review a report
-app.post("/reports/:id/review", async function (req, res, next) {
+app.post("/reports/:id/review", async (req, res, next) => {
   try {
     const reportId = req.params.id;
     const { reviewerName, reviewerContact } = req.body;
 
-    // Update the report's review status
-    await database
+    await client
+      .db("durniti-rodh")
       .collection("reports")
       .updateOne({ _id: new ObjectId(reportId) }, { $set: { reviewed: true } });
 
-    // Record the action in the actions collection
-    await database.collection("actions").insertOne({
+    await client.db("durniti-rodh").collection("actions").insertOne({
       reportId: reportId,
       actionType: "review",
       reviewerName,
@@ -231,21 +236,20 @@ app.post("/reports/:id/review", async function (req, res, next) {
 });
 
 // Route to mark a report as solved
-app.post("/reports/:id/solve", async function (req, res, next) {
+app.post("/reports/:id/solve", async (req, res, next) => {
   try {
     const reportId = req.params.id;
     const { solverName, solverContact } = req.body;
 
-    // Update the report's solve status
-    await database
+    await client
+      .db("durniti-rodh")
       .collection("reports")
       .updateOne(
         { _id: new ObjectId(reportId) },
         { $set: { solveStatus: "Solved" } }
       );
 
-    // Record the action in the actions collection
-    await database.collection("actions").insertOne({
+    await client.db("durniti-rodh").collection("actions").insertOne({
       reportId: reportId,
       actionType: "solve",
       solverName,
@@ -260,13 +264,13 @@ app.post("/reports/:id/solve", async function (req, res, next) {
 });
 
 // Route to mark a report as unsolved
-app.post("/reports/:id/unsolve", async function (req, res, next) {
+app.post("/reports/:id/unsolve", async (req, res, next) => {
   try {
     const reportId = req.params.id;
     const { cause } = req.body;
 
-    // Update the report's solve status to unsolved
-    await database
+    await client
+      .db("durniti-rodh")
       .collection("reports")
       .updateOne(
         { _id: new ObjectId(reportId) },
@@ -279,15 +283,26 @@ app.post("/reports/:id/unsolve", async function (req, res, next) {
   }
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
+// Default route
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
+
 // Start the server and connect to MongoDB
-app.listen(8000, async function () {
+app.listen(8000, async () => {
   await connectToMongoDB();
   console.log("CORS-enabled web server listening on port 8000");
 });
 
 // Close MongoDB connection when the process exits
 process.on("SIGINT", async () => {
-  console.log("MongoDB connection closed");
   await client.close();
+  console.log("MongoDB connection closed");
   process.exit(0);
 });
